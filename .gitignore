@@ -1,0 +1,9 @@
+_
+theos
+.theos
+obj
+*.deb
+.DS_Store
+Tweak_umino.xm
+*.png
+Preference.m

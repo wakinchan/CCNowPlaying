@@ -1,0 +1,14 @@
+Package: com.kindadev.ccnowplaying
+Name: CCNowPlaying
+Depends: firmware (>= 7.0), mobilesubstrate (>= 0.9.5000), preferenceloader (>= 2.2.2)
+Version: 0.8.1
+Architecture: iphoneos-arm
+Description: Post #NowPlaying from Control Center
+Maintainer: thebigboss.org <http://thebigboss.org>
+Author: kinda <kinda.dev@gmail.com>
+Section: Tweaks
+Tag: purpose::extension
+Homepage: http://moreinfo.thebigboss.org/moreinfo/depiction.php?file=ccnowplayingDp
+Depiction: http://moreinfo.thebigboss.org/moreinfo/depiction.php?file=ccnowplayingDp
+dev: kindadev
+Icon: file:///Library/PreferenceBundles/CCNowPlayingSettings.bundle/CCNowPlaying@2x.png

@@ -1,0 +1,10 @@
+{
+	entry = {
+		bundle = "CCNowPlayingSettings";
+		cell = PSLinkCell;
+		detail = "CCNowPlayingListController";
+		icon = "CCNowPlaying.png";
+		isController = 1;
+		label = CCNowPlaying;
+	};
+}

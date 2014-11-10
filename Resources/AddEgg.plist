@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.kindadev.ccnowplaying</string>
+			<key>key</key>
+			<string>removeSpace</string>
+			<key>label</key>
+			<string>remove space from _APP_</string>
+			<key>PostNotification</key>
+			<string>com.kindadev.ccnowplaying.settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Format (if no artwork song)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.kindadev.ccnowplaying</string>
+			<key>key</key>
+			<string>enableEgg</string>
+			<key>label</key>
+			<string>Enable</string>
+			<key>PostNotification</key>
+			<string>com.kindadev.ccnowplaying.settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>PostNotification</key>
+			<string>com.kindadev.ccnowplaying.settingschanged</string>
+			<key>defaults</key>
+			<string>com.kindadev.ccnowplaying</string>
+			<key>default</key>
+			<string>#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_</string>
+			<key>placeholder</key>
+			<string>#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_</string>
+			<key>key</key>
+			<string>formatNoArtwork</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>CCNowPlaying</string>
+</dict>
+</plist>
