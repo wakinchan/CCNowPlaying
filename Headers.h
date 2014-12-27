@@ -11,6 +11,7 @@
 // #define kCFCoreFoundationVersionNumber_iOS_8_0 1129.15
 #endif
 
+#define AUXO_3_TRACK_INFO_VIEW_HEIGHT 73.0
 #define IS_IOS8() (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_8_0)
 
 
@@ -70,9 +71,14 @@
 @end
 
 @interface UminoControlCenterBottomView : UIView
+- (void)alphaButtonWithScrollView:(UIView *)scrollView;
 - (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo;
 - (void)handleTaped:(int)tapedChoice withSender:(id)sender;
 - (void)dismissNotificationCenter;
+@end
+
+@interface UminoControlCenterBottomScrollView : UIScrollView
+- (_Bool)gestureRecognizer:(id)arg1 shouldReceiveTouch:(id)arg2;
 @end
 
 @interface SBMediaController
@@ -104,6 +110,11 @@
 - (id)displayName;
 @end
 
+@interface SBUIController
++(id)sharedInstance;
+-(id)switcherController;
+@end
+
 @interface SBControlCenterController
 + (id)sharedInstance;
 - (void)dismissAnimated:(BOOL)animated;
@@ -122,3 +133,4 @@
 + (id)keyWindow;
 - (id)firstResponder;
 @end
+

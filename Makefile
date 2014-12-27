@@ -3,6 +3,7 @@ export TARGET_IPHONEOS_DEPLOYMENT_VERSION = 7.0
 export GO_EASY_ON_ME = 1
 export SHARED_CFLAGS = -fobjc-arc
 export THEOS_BUILD_DIR = debs
+export THEOS_DEVICE_IP=192.168.1.11
 
 include /opt/theos/makefiles/common.mk
 

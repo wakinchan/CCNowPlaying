@@ -170,9 +170,9 @@ static void AddButtons(id cself, BOOL isUmino)
             CGSize s = [[UIScreen mainScreen] applicationFrame].size;
             float w = (s.width < s.height) ? s.width : s.height;
             if (isUmino) {
-                rightBtn.frame = CGRectMake(w - 40.0 - 3.0, 163.0+position, 40.0, 40.0);
+                rightBtn.frame = CGRectMake(w-40.0-3.0, 163.0+position, 40.0, 40.0);
             } else {
-                rightBtn.frame = CGRectMake(w - 40.0 - 3.0, 71.0+position, 40.0, 40.0);
+                rightBtn.frame = CGRectMake(w-40.0-3.0, 71.0+position, 40.0, 40.0);
             }
         }
         if (isUmino) {
@@ -420,6 +420,29 @@ static void DismissControlCenter()
 
 %group Auxo3
 %hook UminoControlCenterBottomView
+- (void)scrollViewWillBeginDragging:(UminoControlCenterBottomScrollView *)view
+{
+    [self alphaButtonWithScrollView:view];
+    %orig;
+}
+
+- (void)scrollViewDidScroll:(UminoControlCenterBottomScrollView *)view
+{
+    [self alphaButtonWithScrollView:view];
+    %orig;
+}
+
+%new
+- (void)alphaButtonWithScrollView:(UminoControlCenterBottomScrollView *)scrollView
+{
+    for (id subview in [self subviews]) {
+        if ([subview isKindOfClass:[%c(SBUIControlCenterButton) class]]) {
+            UIButton *ccb = subview;
+            ccb.alpha = 1.0-(scrollView.contentOffset.y/AUXO_3_TRACK_INFO_VIEW_HEIGHT);
+        }
+    }
+}
+
 - (void)layoutSubviews
 {
     %orig;
@@ -472,8 +495,8 @@ static void DismissControlCenter()
 %hook UminoTrackInfoView
 - (id)initWithFrame:(CGRect)rect
 {
-    rect.origin.x = rect.origin.x + 60.f;
-    rect.size.width = rect.size.width - 60.f;
+    rect.origin.x = rect.origin.x+60.f;
+    rect.size.width = rect.size.width-60.f;
     return %orig(rect);
 }
 %end
