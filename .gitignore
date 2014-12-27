@@ -5,5 +5,4 @@ debs
 obj
 .DS_Store
 Tweak_umino.xm
-*.png
 Preference.m
