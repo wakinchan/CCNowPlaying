@@ -25,8 +25,8 @@
 
 // iOS 8 or heigher.
 + (id)_buttonWithBGImage:(id)bgImage1 glyphImage:(id)glyphImage naturalHeight:(float)height;
-- (void)setIsCircleButton:(BOOL)arg1;
-- (void)setIsRectButton:(BOOL)arg1;
+- (void)setIsCircleButton:(BOOL)button;
+- (void)setIsRectButton:(BOOL)button;
 @end
 
 @interface SBControlCenterSectionViewController : UIViewController {
@@ -64,31 +64,15 @@
 @interface SBCCMediaControlsSectionController : SBControlCenterSectionViewController <MPUSystemMediaControlsDelegate> {
     // MPUSystemMediaControlsViewController* _systemMediaViewController;
 }
-
-- (void)systemMediaControlsViewController:(id)controller didReceiveTapOnControlType:(int)type;
-- (void)viewDidLoad;
-- (CGSize)contentSizeForOrientation:(int)orientation;
-- (id)sectionIdentifier;
-- (void)dealloc;
-- (id)initWithNibName:(id)nibName bundle:(id)bundle;
-
-- (void)addButtons;
-- (void)clearButton:(UIView *)containerView;
-- (SBUIControlCenterButton *)makeGlyphButton:(int)choice;
 - (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo;
+- (void)handleTaped:(int)tapedChoice withSender:(id)sender;
 - (void)dismissNotificationCenter;
+@end
 
-- (void)makeShareComposeViewController:(int)choice;
-- (NSDictionary *)currentNowPlayingInfo;
-- (UIImage *)currentNowPlayingArtwork;
-- (NSString *)getImageName:(int)choice;
-- (NSString *)getServiceType:(int)choice;
-- (NSString *)getServiceTypeName:(int)choice;
-- (NSString *)getAccountTypeIdentifier:(int)choice;
-
-- (NSString *)platforms;
-- (BOOL)isPad;
-- (BOOL)orientationIsPortrait;
+@interface UminoControlCenterBottomView : UIView
+- (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo;
+- (void)handleTaped:(int)tapedChoice withSender:(id)sender;
+- (void)dismissNotificationCenter;
 @end
 
 @interface SBMediaController
@@ -101,11 +85,13 @@
 - (BOOL)isPlaying;
 @end
 
-
 @interface SpringBoard : UIApplication
 - (BOOL)isLocked;
 - (void)requestDeviceUnlock;
 - (int)activeInterfaceOrientation;
+@end
+
+@interface SBAppSwitcherController : UIViewController
 @end
 
 @interface SBUserAgent
@@ -120,16 +106,16 @@
 
 @interface SBControlCenterController
 + (id)sharedInstance;
-- (void)dismissAnimated:(BOOL)arg1;
+- (void)dismissAnimated:(BOOL)animated;
 @end
 
 @interface SBNotificationCenterController
 + (id)sharedInstance;
-- (void)dismissAnimated:(BOOL)arg1;
+- (void)dismissAnimated:(BOOL)animated;
 @end
 
 @interface UIViewController (CCNowPlaying)
-- (void)setInterfaceOrientation:(int)arg1;
+- (void)setInterfaceOrientation:(int)orientation;
 @end
 
 @interface UIWindow (CCNowPlaying)

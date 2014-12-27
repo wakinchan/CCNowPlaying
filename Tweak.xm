@@ -10,9 +10,7 @@
 
 #import <Social/Social.h>
 #import <QuartzCore/QuartzCore.h>
-#import <Accounts/ACAccount.h>
-#import <Accounts/ACAccountStore.h>
-#import <Accounts/ACAccountType.h>
+#import <Accounts/Accounts.h>
 #import <AppSupport/AppSupport.h>
 #import <UIKit/UIKit2.h>
 #import "substrate.h"
@@ -37,127 +35,160 @@ static BOOL isEnableEgg;
 static BOOL isRemoveSpace;
 static float position;
 
-static SBMediaController *mc;
-static SLComposeViewController *vc;
-static CPDistributedMessagingCenter *c;
-
+static SBMediaController *mc = nil;
+static SLComposeViewController *vc = nil;
+static CPDistributedMessagingCenter *c = nil;
 static __weak SBCCMediaControlsSectionController *sc = nil;
 static int choice = 0;
 
-%hook SBMediaController
-- (void)setNowPlayingInfo:(id)info
-{
-    %orig;
-    dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_async(globalQueue, ^{
-        dispatch_queue_t subQueue = dispatch_queue_create("com.kindadev.ccnowplaying.dispatch", NULL);
-        dispatch_sync(subQueue, ^{
-            [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
-        });
-        dispatch_release(subQueue);
-    });
-}
-%end
+static NSString * GetImageName(int choice);
+static NSString * GetServiceType(int choice);
+static NSString * GetServiceTypeName(int choice);
+static NSString * GetAccountTypeIdentifier(int choice);
+static void ClearButton(UIView * view);
+static SBUIControlCenterButton * MakeGlyphButton(int choice);
+static void AddButtons(id cself, BOOL isUmino);
+static BOOL IsPad();
+static BOOL OrientationIsPortrait();
+static MPUNowPlayingController * GetNowPlayingConteroller(id cself);
+static UIImage * CurrentNowPlayingArtwork(id cself);
+static NSDictionary * CurrentNowPlayingInfo(id cself);
+static void ShowComposeViewController(id cself, id parent, int choice);
+static void DismissControlCenter();
 
-%hook SBCCMediaControlsSectionController
-- (void)viewDidLoad
+static NSString * GetImageName(int choice)
 {
-    %orig;
-    if (!isShowWhenPlaying) [self addButtons];
-    if (!c) {
-        c = [CPDistributedMessagingCenter centerNamed:@"com.kindadev.ccnowplaying.center"];
-        [c runServerOnCurrentThread];
+    static NSString *imageName;
+    switch (choice) {
+        case 1: imageName = @"ccNow-twitter"; break;
+        case 2: imageName = @"ccNow-faceBk2"; break;
+        case 3: imageName = @"ccNow-shina"; break;
+        case 4: imageName = @"ccNow-tencent"; break;
+        default: imageName = @"ccNow-onpu1"; break;
     }
-    [c registerForMessageName:@"com.kindadev.ccnowplaying.info.changed" target:self selector:@selector(handleMessageNamed:userInfo:)];
+    return imageName;
 }
 
-%new
-- (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo
+static NSString * GetServiceType(int choice)
 {
-    if (!mc) mc = [[%c(SBMediaController) sharedInstance] init];
-    if ([name isEqualToString:@"com.kindadev.ccnowplaying.info.changed"]) {
-        if (![mc isPlaying] && isShowWhenPlaying) {
-            [self clearButton:self.view];
-        } else {
-            [self clearButton:self.view];
-            [self addButtons];
+    static NSString *serviceType;
+    switch (choice) {
+        default: 
+        case 1: serviceType = SLServiceTypeTwitter; break;
+        case 2: serviceType = SLServiceTypeFacebook; break;
+        case 3: serviceType = SLServiceTypeSinaWeibo; break;
+        case 4: serviceType = SLServiceTypeTencentWeibo; break;
+    }
+    return serviceType;
+}
+
+static NSString * GetServiceTypeName(int choice)
+{
+    static NSString *serviceTypeName;
+    switch (choice) {
+        default: 
+        case 1: serviceTypeName = @"Twitter"; break;
+        case 2: serviceTypeName = @"Facebook"; break;
+        case 3: serviceTypeName = @"Sina Weibo"; break;
+        case 4: serviceTypeName = @"Tencent Weibo"; break;
+    }
+    return serviceTypeName;
+}
+
+static NSString * GetAccountTypeIdentifier(int choice)
+{
+    static NSString *accountTypeIdentifier;
+    switch (choice) {
+        default: 
+        case 1: accountTypeIdentifier = ACAccountTypeIdentifierTwitter; break;
+        case 2: accountTypeIdentifier = ACAccountTypeIdentifierFacebook; break;
+        case 3: accountTypeIdentifier = ACAccountTypeIdentifierSinaWeibo; break;
+        case 4: accountTypeIdentifier = ACAccountTypeIdentifierTencentWeibo; break;
+    }
+    return accountTypeIdentifier;
+}
+
+static void ClearButton(UIView * view)
+{
+    for (id subview in [view subviews]) {
+        if ([subview isKindOfClass:[%c(SBUIControlCenterButton) class]]) {
+            [subview removeFromSuperview];
         }
     }
 }
 
-%new
-- (void)addButtons
+static SBUIControlCenterButton * MakeGlyphButton(int choice)
 {
-    if (leftChoice != 0) {
-        SBUIControlCenterButton *leftBtn = [self makeGlyphButton:leftChoice];
-        [leftBtn addTarget:self action:@selector(leftButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        if ([self isPad]) {
-            float scale = [[UIScreen mainScreen] scale];
-            leftBtn.frame = CGRectMake([self orientationIsPortrait] ? -(2.5*scale) : 17.5*scale, [self orientationIsPortrait] ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
-        } else {
-            leftBtn.frame = CGRectMake(10.0, 71.0+position, 40.0, 40.0);
-        }
-        [self.view addSubview:leftBtn];
-    }
-
-    if (rightChoice != 0) {
-        SBUIControlCenterButton *rightBtn = [self makeGlyphButton:rightChoice];
-        [rightBtn addTarget:self action:@selector(rightButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        if ([self isPad]) {
-            float scale = [[UIScreen mainScreen] scale];
-            rightBtn.frame = CGRectMake([self orientationIsPortrait] ? 90.0*scale : 111.0*scale, [self orientationIsPortrait] ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
-        } else {
-            CGSize s = self.view.bounds.size;
-            float w = (s.width > s.height) ? s.width : s.height;
-            rightBtn.frame = CGRectMake(w - 40.0 - 10.0, 71.0 + position, 40.0, 40.0);
-        }
-        [self.view addSubview:rightBtn];
-    }
-}
-
-%new
-- (SBUIControlCenterButton *)makeGlyphButton:(int)choice
-{
-    UIImage *img = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"/Library/Application Support/CCNowPlaying/%@.png", [self getImageName:choice]]];
+    UIImage *img = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"/Library/Application Support/CCNowPlaying/%@.png", GetImageName(choice)]];
     SBUIControlCenterButton *btn = [%c(SBUIControlCenterButton) new];
     switch (rightBtnImage) {
         default:
         case 0:
-            if (IS_IOS8()) {
-                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
-            } else {
-                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil selectedBGImage:nil glyphImage:img naturalHeight:0.0];
-            }
+            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
             break;
         case 1:
-            if (IS_IOS8()) {
-                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
-                [btn setIsCircleButton:YES];
-            } else {
-                btn = [%c(SBUIControlCenterButton) circularButtonWithGlyphImage:img];
-            }
+            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+            [btn setIsCircleButton:YES];
             break;
         case 2:
-            if (IS_IOS8()) {
-                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
-                [btn setIsRectButton:YES];
-            } else {
-                btn = [%c(SBUIControlCenterButton) roundRectButtonWithGlyphImage:img];
-            }
+            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+            [btn setIsRectButton:YES];
             break;
     }
     return btn;
 }
 
+static void AddButtons(id cself, BOOL isUmino)
+{
+    if (leftChoice != 0) {
+        SBUIControlCenterButton *leftBtn = MakeGlyphButton(leftChoice);
+        [leftBtn addTarget:cself action:@selector(leftButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        if (IsPad()) {
+            float scale = [[UIScreen mainScreen] scale];
+            leftBtn.frame = CGRectMake(OrientationIsPortrait() ? -(2.5*scale) : 17.5*scale, OrientationIsPortrait() ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
+        } else {
+            if (isUmino) {
+                leftBtn.frame = CGRectMake(3.0, 163.0+position, 40.0, 40.0);
+            } else {
+                leftBtn.frame = CGRectMake(10.0, 71.0+position, 40.0, 40.0);
+            }
+        }
+        if (isUmino) {
+            [cself addSubview:leftBtn];
+        } else {
+            [[cself view] addSubview:leftBtn];
+        }
+    }
 
-%new
-- (BOOL)isPad
+    if (rightChoice != 0) {
+        SBUIControlCenterButton *rightBtn = MakeGlyphButton(rightChoice);
+        [rightBtn addTarget:cself action:@selector(rightButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        if (IsPad()) {
+            float scale = [[UIScreen mainScreen] scale];
+            rightBtn.frame = CGRectMake(OrientationIsPortrait() ? 90.0*scale : 111.0*scale, OrientationIsPortrait() ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
+        } else {
+            CGSize s = [[UIScreen mainScreen] applicationFrame].size;
+            float w = (s.width < s.height) ? s.width : s.height;
+            if (isUmino) {
+                rightBtn.frame = CGRectMake(w - 40.0 - 3.0, 163.0+position, 40.0, 40.0);
+            } else {
+                rightBtn.frame = CGRectMake(w - 40.0 - 3.0, 71.0+position, 40.0, 40.0);
+            }
+        }
+        if (isUmino) {
+            [cself addSubview:rightBtn];
+        } else {
+            [[cself view] addSubview:rightBtn];
+        }
+    }
+}
+
+static BOOL IsPad()
 {
     return UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad;
 }
 
-%new
-- (BOOL)orientationIsPortrait
+static BOOL OrientationIsPortrait()
 {
     switch ([(SpringBoard *)UIApp activeInterfaceOrientation]) {
         default:
@@ -170,58 +201,36 @@ static int choice = 0;
     }
 }
 
-%new
-- (void)clearButton:(UIView *)view
+static MPUNowPlayingController * GetNowPlayingConteroller(id cself)
 {
-    for (id subview in [view subviews]) {
-        if ([subview isKindOfClass:[%c(SBUIControlCenterButton) class]]) {
-            [subview removeFromSuperview];
-        }
-    }
-}
-
-%new
-- (void)leftButtonTapped:(id)sender
-{
-    [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
-    if (IS_IOS8()) {
-        if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
-            sc = self;
-            choice = leftChoice;
-            [(SpringBoard *)UIApp requestDeviceUnlock];
-        } else {
-            [self makeShareComposeViewController:leftChoice];
-        }
+    MPUNowPlayingController *npc = nil;
+    if ([cself isKindOfClass:[%c(SBCCMediaControlsSectionController) class]]) {
+        MPUSystemMediaControlsViewController *smc = MSHookIvar<MPUSystemMediaControlsViewController *>(cself, "_systemMediaViewController");
+        npc = MSHookIvar<MPUNowPlayingController *>(smc, "_nowPlayingController");
     } else {
-        [self makeShareComposeViewController:leftChoice];
+        npc = MSHookIvar<MPUNowPlayingController *>(cself, "_nowPlayingController");
     }
+    return npc;
 }
 
-%new
-- (void)rightButtonTapped:(id)sender
+static UIImage * CurrentNowPlayingArtwork(id cself)
 {
-    [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
-    if (IS_IOS8()) {
-        if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
-            sc = self;
-            choice = rightChoice;
-            [(SpringBoard *)UIApp requestDeviceUnlock];
-        } else {
-            [self makeShareComposeViewController:rightChoice];
-        }
-    } else {
-        [self makeShareComposeViewController:rightChoice];
-    }
+    MPUNowPlayingController *npc = GetNowPlayingConteroller(cself);
+    return [npc currentNowPlayingArtwork];
 }
 
-%new
-- (void)makeShareComposeViewController:(int)choice
+static NSDictionary * CurrentNowPlayingInfo(id cself)
+{
+    MPUNowPlayingController *npc = GetNowPlayingConteroller(cself);
+    return [npc currentNowPlayingInfo];
+}
+
+static void ShowComposeViewController(id cself, id parent, int choice)
 {
     if (vc) vc = nil;
-
-    NSString *type = [self getServiceType:choice];
-    NSString *typeName = [self getServiceTypeName:choice];
-    NSString *accountTypeIdentifier = [self getAccountTypeIdentifier:choice];
+    NSString *type = GetServiceType(choice);
+    NSString *typeName = GetServiceTypeName(choice);
+    NSString *accountTypeIdentifier = GetAccountTypeIdentifier(choice);
 
     ACAccountStore *accountStore = [[ACAccountStore alloc] init];
     ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:accountTypeIdentifier];
@@ -231,28 +240,28 @@ static int choice = 0;
     if (accounts.count == 0) {
         [[[UIAlertView alloc] initWithTitle:@"CCNowPlaying" message:[NSString stringWithFormat:@"Please set from iOS default \"%@\" section.", typeName] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
         if (isAutoCloseCC) {
-            [self dismissNotificationCenter];
+            DismissControlCenter();
         }
         return;
     }
 
     vc = [SLComposeViewController composeViewControllerForServiceType:type];
     vc.completionHandler = ^(SLComposeViewControllerResult result) {
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [parent dismissViewControllerAnimated:YES completion:nil];
         vc = nil;
         [vc release];
         if (isAutoCloseCC) {
-            [self dismissNotificationCenter];
+            DismissControlCenter();
         }
     };
 
     if ([mc isPlaying]) {
         // NOTE: SBMediaController(nowPlayingAlbum, nowPlayingTitle, nowPlayingArtist) is dead on iOS 8.
         // get artwork
-        UIImage *artwork = [self currentNowPlayingArtwork];
+        UIImage *artwork = CurrentNowPlayingArtwork(cself);
 
         // get song info
-        NSDictionary *info = [self currentNowPlayingInfo];
+        NSDictionary *info = CurrentNowPlayingInfo(cself);
         NSString *artist = info[@"kMRMediaRemoteNowPlayingInfoArtist"];
         NSString *album  = info[@"kMRMediaRemoteNowPlayingInfoAlbum"];
         NSString *title  = info[@"kMRMediaRemoteNowPlayingInfoTitle"];
@@ -273,33 +282,15 @@ static int choice = 0;
     }
 
     if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
-        NSLog(@"%s: is still locked.", __func__);
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self presentViewController:vc animated:YES completion:nil];
+            [parent presentViewController:vc animated:YES completion:nil];
         });
     } else {
-        [self presentViewController:vc animated:YES completion:nil];
+        [parent presentViewController:vc animated:YES completion:nil];
     }
 }
 
-%new
-- (NSDictionary *)currentNowPlayingInfo
-{
-    MPUSystemMediaControlsViewController *smc = MSHookIvar<MPUSystemMediaControlsViewController *>(self, "_systemMediaViewController");
-    MPUNowPlayingController *npc = MSHookIvar<MPUNowPlayingController *>(smc, "_nowPlayingController");
-    return [npc currentNowPlayingInfo];
-}
-
-%new
-- (UIImage *)currentNowPlayingArtwork
-{
-    MPUSystemMediaControlsViewController *smc = MSHookIvar<MPUSystemMediaControlsViewController *>(self, "_systemMediaViewController");
-    MPUNowPlayingController *npc = MSHookIvar<MPUNowPlayingController *>(smc, "_nowPlayingController");
-    return [npc currentNowPlayingArtwork];
-}
-
-%new
-- (void)dismissNotificationCenter
+static void DismissControlCenter()
 {
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.hamzasood.multitaskinggestures.plist"];
     id existMCC = [dict objectForKey:@"MoveControlCenter"];
@@ -311,80 +302,97 @@ static int choice = 0;
     }
 }
 
-%new
-- (NSString *)getImageName:(int)choice
+%hook SBMediaController
+- (void)setNowPlayingInfo:(id)info
 {
-    static NSString *imageName;
-    switch (choice) {
-        case 1: imageName = @"ccNow-twitter"; break;
-        case 2: imageName = @"ccNow-faceBk2"; break;
-        case 3: imageName = @"ccNow-shina"; break;
-        case 4: imageName = @"ccNow-tencent"; break;
-        default: imageName = @"ccNow-onpu1"; break;
+    %orig;
+    dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(globalQueue, ^{
+        dispatch_queue_t subQueue = dispatch_queue_create("com.kindadev.ccnowplaying.dispatch", NULL);
+        dispatch_sync(subQueue, ^{
+            [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
+            [c sendMessageName:@"com.kindadev.ccnowplaying.info.auxo3.changed" userInfo:nil];
+        });
+        dispatch_release(subQueue);
+    });
+}
+%end
+
+%hook SBCCMediaControlsSectionController
+- (void)viewDidLoad
+{
+    %orig;
+    if (!isShowWhenPlaying) {
+        ClearButton(self.view);
+        AddButtons(self, NO);
     }
-    return imageName;
+    if (!c) {
+        c = [CPDistributedMessagingCenter centerNamed:@"com.kindadev.ccnowplaying.center"];
+        [c runServerOnCurrentThread];
+    }
+    [c registerForMessageName:@"com.kindadev.ccnowplaying.info.changed" target:self selector:@selector(handleMessageNamed:userInfo:)];
 }
 
 %new
-- (NSString *)getServiceType:(int)choice
+- (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo
 {
-    static NSString *serviceType;
-    switch (choice) {
-        default: 
-        case 1: serviceType = SLServiceTypeTwitter; break;
-        case 2: serviceType = SLServiceTypeFacebook; break;
-        case 3: serviceType = SLServiceTypeSinaWeibo; break;
-        case 4: serviceType = SLServiceTypeTencentWeibo; break;
+    if (!mc) mc = [[%c(SBMediaController) sharedInstance] init];
+    if ([name isEqualToString:@"com.kindadev.ccnowplaying.info.changed"]) {
+        if (![mc isPlaying] && isShowWhenPlaying) {
+            ClearButton(self.view);
+        } else {
+            ClearButton(self.view);
+            AddButtons(self, NO);
+        }
     }
-    return serviceType;
 }
 
 %new
-- (NSString *)getServiceTypeName:(int)choice
+- (void)leftButtonTapped:(id)sender
 {
-    static NSString *serviceTypeName;
-    switch (choice) {
-        default: 
-        case 1: serviceTypeName = @"Twitter"; break;
-        case 2: serviceTypeName = @"Facebook"; break;
-        case 3: serviceTypeName = @"Sina Weibo"; break;
-        case 4: serviceTypeName = @"Tencent Weibo"; break;
-    }
-    return serviceTypeName;
+    [self handleTaped:leftChoice withSender:sender];
 }
 
 %new
-- (NSString *)getAccountTypeIdentifier:(int)choice
+- (void)rightButtonTapped:(id)sender
 {
-    static NSString *accountTypeIdentifier;
-    switch (choice) {
-        default: 
-        case 1: accountTypeIdentifier = ACAccountTypeIdentifierTwitter; break;
-        case 2: accountTypeIdentifier = ACAccountTypeIdentifierFacebook; break;
-        case 3: accountTypeIdentifier = ACAccountTypeIdentifierSinaWeibo; break;
-        case 4: accountTypeIdentifier = ACAccountTypeIdentifierTencentWeibo; break;
+    [self handleTaped:rightChoice withSender:sender];
+}
+
+%new
+- (void)handleTaped:(int)tapedChoice withSender:(id)sender
+{
+    choice = tapedChoice;
+    [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
+    if (IS_IOS8()) {
+        if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
+            [(SpringBoard *)UIApp requestDeviceUnlock];
+        } else {
+            ShowComposeViewController(self, self, choice);
+        }
+    } else {
+        ShowComposeViewController(self, self, choice);
     }
-    return accountTypeIdentifier;
 }
 %end
 
 %hook SBControlCenterController
-- (void)dismissAnimated:(BOOL)arg1
+- (void)dismissAnimated:(BOOL)animated
 {
     if (!vc) %orig;
 }
 
-- (void)_dismissWithDuration:(double)arg1 additionalAnimations:(id)arg2 completion:(id)arg3
+- (void)_dismissWithDuration:(double)duration additionalAnimations:(id)animations completion:(id)completion
 {
     if (!vc) %orig;
 }
 
-- (void)dismissAnimated:(BOOL)arg1 withAdditionalAnimations:(id)arg2 completion:(id)arg3
+- (void)dismissAnimated:(BOOL)animated withAdditionalAnimations:(id)animations completion:(id)completion
 {
     if (!vc) %orig;
 }
 
-- (void)dismissAnimated:(BOOL)arg1 completion:(id)arg2
+- (void)dismissAnimated:(BOOL)animated completion:(id)completion
 {
     if (!vc) %orig;
 }
@@ -401,28 +409,83 @@ static int choice = 0;
 {
     BOOL success = %orig;
     if (success) {
-        // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [sc makeShareComposeViewController:choice];
-        // });
+        if (!sc) {
+            ShowComposeViewController(sc, sc, choice);
+        }
     }
     return success;
 }
 %end
 
-%hook SpringBoard
-- (void)_lockButtonDown:(id)arg1 fromSource:(int)arg2
+
+%group Auxo3
+%hook UminoControlCenterBottomView
+- (void)layoutSubviews
 {
-    if (vc) {
-        [vc dismissViewControllerAnimated:YES completion:^{
-            vc = nil;
-            [vc release];
-            [[%c(SBNotificationCenterController) sharedInstance] dismissAnimated:YES];
-        }];
+    %orig;
+    if (!isShowWhenPlaying) {
+        ClearButton(self);
+        AddButtons(self, YES);
     }
-    return %orig;
+    if (!c) {
+        c = [CPDistributedMessagingCenter centerNamed:@"com.kindadev.ccnowplaying.center.auxo"];
+        [c runServerOnCurrentThread];
+    }
+    [c registerForMessageName:@"com.kindadev.ccnowplaying.info.auxo3.changed" target:self selector:@selector(handleMessageNamed:userInfo:)];
+}
+
+%new
+- (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo
+{
+    if (!mc) mc = [[%c(SBMediaController) sharedInstance] init];
+    if ([name isEqualToString:@"com.kindadev.ccnowplaying.info.auxo3.changed"]) {
+        if (![mc isPlaying] && isShowWhenPlaying) {
+            ClearButton(self);
+        } else {
+            ClearButton(self);
+            AddButtons(self, YES);
+        }
+    }
+}
+
+%new
+- (void)leftButtonTapped:(id)sender
+{
+    [self handleTaped:leftChoice withSender:sender];
+}
+
+%new
+- (void)rightButtonTapped:(id)sender
+{
+    [self handleTaped:rightChoice withSender:sender];
+}
+
+%new
+- (void)handleTaped:(int)tapedChoice withSender:(id)sender
+{
+    [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
+    SBUIController *uic = [[%c(SBUIController) sharedInstance] switcherController];
+    ShowComposeViewController(self, uic, tapedChoice);
 }
 %end
 
+%hook UminoTrackInfoView
+- (id)initWithFrame:(CGRect)rect
+{
+    rect.origin.x = rect.origin.x + 60.f;
+    rect.size.width = rect.size.width - 60.f;
+    return %orig(rect);
+}
+%end
+%end
+
+%hook SpringBoard
+- (void)applicationDidFinishLaunching:(id)application
+{
+    %orig;
+    %init(Auxo3);
+}
+%end
 
 
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.kindadev.ccnowplaying.plist"

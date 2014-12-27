@@ -1,7 +1,8 @@
 export ARCHS = armv7 armv7s arm64
-export TARGET = iphone:clang:
-#export THEOS_DEVICE_IP = 192.168.1.4
+export TARGET_IPHONEOS_DEPLOYMENT_VERSION = 7.0
 export GO_EASY_ON_ME = 1
+export SHARED_CFLAGS = -fobjc-arc
+export THEOS_BUILD_DIR = debs
 
 include /opt/theos/makefiles/common.mk
 
