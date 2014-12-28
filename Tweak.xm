@@ -37,6 +37,7 @@ static float position;
 
 static SBMediaController *mc = nil;
 static SLComposeViewController *vc = nil;
+static SBAppSwitcherController *asc = nil;
 static CPDistributedMessagingCenter *c = nil;
 static __weak SBCCMediaControlsSectionController *sc = nil;
 static int choice = 0;
@@ -374,6 +375,7 @@ static void DismissControlCenter()
 %new
 - (void)handleTaped:(int)tapedChoice withSender:(id)sender
 {
+    sc = self;
     choice = tapedChoice;
     [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
     // Device can not launch the appex from a locked state by further strengthening sandbox in iOS 8.
@@ -382,12 +384,24 @@ static void DismissControlCenter()
     if (IS_IOS8()) {
         if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
             [(SpringBoard *)UIApp requestDeviceUnlock];
-        } else {
-            ShowComposeViewController(self, self, choice);
+            return;
         }
-    } else {
-        ShowComposeViewController(self, self, choice);
     }
+    ShowComposeViewController(self, self, choice);
+}
+%end
+
+%hook SpringBoard
+- (void)_lockButtonDown:(id)arg1 fromSource:(int)arg2
+{
+    if (sc) {
+        [vc dismissViewControllerAnimated:YES completion:^{
+            vc = nil;
+            [vc release];
+            DismissControlCenter();
+        }];
+    }
+    return %orig;
 }
 %end
 
@@ -502,8 +516,23 @@ static void DismissControlCenter()
 - (void)handleTaped:(int)tapedChoice withSender:(id)sender
 {
     [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
-    SBUIController *uic = [[%c(SBUIController) sharedInstance] switcherController];
-    ShowComposeViewController(self, uic, tapedChoice);
+    asc = [[%c(SBUIController) sharedInstance] switcherController];
+    [asc addObserver:self forKeyPath:@"startingDisplayLayout" options:NSKeyValueObservingOptionNew context:nil];
+    ShowComposeViewController(self, asc, tapedChoice);
+}
+
+%new
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqual:@"startingDisplayLayout"]) {
+        if (change[@"new"] == [NSNull null]) {
+            [vc dismissViewControllerAnimated:YES completion:^{
+                vc = nil;
+                [vc release];
+            }];
+            [asc removeObserver:self forKeyPath:@"startingDisplayLayout"];
+        }
+    }
 }
 %end
 
