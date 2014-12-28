@@ -12,7 +12,7 @@
 #endif
 
 #define CCNOWPLAYING_PREFERENCES_PATH    @"/var/mobile/Library/Preferences/com.kindadev.ccnowplaying.plist"
-#define CCNOWPLAYING_DISPATCH_QUEUE      @"com.kindadev.ccnowplaying.dispatch"
+#define CCNOWPLAYING_DISPATCH_QUEUE      "com.kindadev.ccnowplaying.dispatch"
 #define CCNOWPLAYING_CENTER_NAME         @"com.kindadev.ccnowplaying.center"
 #define CCNOWPLAYING_CENTER_NAME_AUXO_3  @"com.kindadev.ccnowplaying.center.auxo3"
 #define SEND_MESSAGE_NAME_INFO_CHANGED   @"com.kindadev.ccnowplaying.info.changed"
