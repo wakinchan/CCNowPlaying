@@ -23,8 +23,8 @@ static NSString *kApplication = @"_APP_";
 
 static int leftChoice;
 static int rightChoice;
-static int leftBtnImage;
-static int rightBtnImage;
+static int leftBtnStyle;
+static int rightBtnStyle;
 
 static NSString *format;
 static NSString *formatNoArtwork;
@@ -46,7 +46,7 @@ static NSString * GetServiceType(int choice);
 static NSString * GetServiceTypeName(int choice);
 static NSString * GetAccountTypeIdentifier(int choice);
 static void ClearButton(UIView * view);
-static SBUIControlCenterButton * MakeGlyphButton(int choice);
+static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft);
 static void AddButtons(id cself, BOOL isUmino);
 static BOOL IsPad();
 static BOOL OrientationIsPortrait();
@@ -117,11 +117,11 @@ static void ClearButton(UIView * view)
     }
 }
 
-static SBUIControlCenterButton * MakeGlyphButton(int choice)
+static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft)
 {
     UIImage *img = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"/Library/Application Support/CCNowPlaying/%@.png", GetImageName(choice)]];
     SBUIControlCenterButton *btn = [%c(SBUIControlCenterButton) new];
-    switch (rightBtnImage) {
+    switch (rightOrLeft == 0 ? leftBtnStyle : rightBtnStyle) {
         default:
         case 0:
             btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
@@ -141,7 +141,7 @@ static SBUIControlCenterButton * MakeGlyphButton(int choice)
 static void AddButtons(id cself, BOOL isUmino)
 {
     if (leftChoice != 0) {
-        SBUIControlCenterButton *leftBtn = MakeGlyphButton(leftChoice);
+        SBUIControlCenterButton *leftBtn = MakeGlyphButton(leftChoice, 0);
         [leftBtn addTarget:cself action:@selector(leftButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         if (IsPad()) {
             float scale = [[UIScreen mainScreen] scale];
@@ -161,7 +161,7 @@ static void AddButtons(id cself, BOOL isUmino)
     }
 
     if (rightChoice != 0) {
-        SBUIControlCenterButton *rightBtn = MakeGlyphButton(rightChoice);
+        SBUIControlCenterButton *rightBtn = MakeGlyphButton(rightChoice, 1);
         [rightBtn addTarget:cself action:@selector(rightButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         if (IsPad()) {
             float scale = [[UIScreen mainScreen] scale];
@@ -533,10 +533,10 @@ static void LoadSettings()
     id existShowWhenPlaying = [dict objectForKey:@"showWhenPlaying"];
     isShowWhenPlaying = existShowWhenPlaying ? [existShowWhenPlaying boolValue] : YES;
 
-    id existLeftBtnImage = [dict objectForKey:@"leftBtnImage"];
-    leftBtnImage = existLeftBtnImage ? [existLeftBtnImage intValue] : 1;
-    id existRightBtnImage = [dict objectForKey:@"rightBtnImage"];
-    rightBtnImage = existRightBtnImage ? [existRightBtnImage intValue] : 1;
+    id existLeftBtnStyle = [dict objectForKey:@"leftBtnImage"];
+    leftBtnStyle = existLeftBtnStyle ? [existLeftBtnStyle intValue] : 1;
+    id existRightBtnStyle = [dict objectForKey:@"rightBtnImage"];
+    rightBtnStyle = existRightBtnStyle ? [existRightBtnStyle intValue] : 1;
 
     id existEnableEgg = [dict objectForKey:@"enableEgg"];
     isEnableEgg = existEnableEgg ? [existEnableEgg boolValue] : NO;

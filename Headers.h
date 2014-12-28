@@ -78,7 +78,7 @@
 @end
 
 @interface UminoControlCenterBottomScrollView : UIScrollView
-- (_Bool)gestureRecognizer:(id)arg1 shouldReceiveTouch:(id)arg2;
+- (_Bool)gestureRecognizer:(id)gesture shouldReceiveTouch:(id)touch;
 @end
 
 @interface SBMediaController
