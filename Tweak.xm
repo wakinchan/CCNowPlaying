@@ -320,10 +320,10 @@ static void DismissControlCenter()
     %orig;
     dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(globalQueue, ^{
-        dispatch_queue_t subQueue = dispatch_queue_create("com.kindadev.ccnowplaying.dispatch", NULL);
+        dispatch_queue_t subQueue = dispatch_queue_create(CCNOWPLAYING_DISPATCH_QUEUE, NULL);
         dispatch_sync(subQueue, ^{
-            [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
-            [c sendMessageName:@"com.kindadev.ccnowplaying.info.auxo3.changed" userInfo:nil];
+            [c sendMessageName:SEND_MESSAGE_NAME_INFO_CHANGED userInfo:nil];
+            [c sendMessageName:SEND_MESSAGE_NAME_AUXO_3_CHANGED userInfo:nil];
         });
     });
 }
@@ -338,17 +338,17 @@ static void DismissControlCenter()
         AddButtons(self, NO);
     }
     if (!c) {
-        c = [CPDistributedMessagingCenter centerNamed:@"com.kindadev.ccnowplaying.center"];
+        c = [CPDistributedMessagingCenter centerNamed:CCNOWPLAYING_CENTER_NAME];
         [c runServerOnCurrentThread];
     }
-    [c registerForMessageName:@"com.kindadev.ccnowplaying.info.changed" target:self selector:@selector(handleMessageNamed:userInfo:)];
+    [c registerForMessageName:SEND_MESSAGE_NAME_INFO_CHANGED target:self selector:@selector(handleMessageNamed:userInfo:)];
 }
 
 %new
 - (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo
 {
     if (!mc) mc = [[%c(SBMediaController) sharedInstance] init];
-    if ([name isEqualToString:@"com.kindadev.ccnowplaying.info.changed"]) {
+    if ([name isEqualToString:SEND_MESSAGE_NAME_INFO_CHANGED]) {
         if (![mc isPlaying] && isShowWhenPlaying) {
             ClearButton(self.view);
         } else {
@@ -437,22 +437,22 @@ static void DismissControlCenter()
 -(void)_beginPresentation
 {
     %orig;
-    [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
+    [c sendMessageName:SEND_MESSAGE_NAME_INFO_CHANGED userInfo:nil];
 }
 %end
 
 
 %group Auxo3
 %hook UminoControlCenterBottomView
-- (void)scrollViewWillBeginDragging:(UminoControlCenterBottomScrollView *)view
+- (void)scrollViewWillBeginDragging:(UminoControlCenterBottomScrollView *)scrollView
 {
-    [self alphaButtonWithScrollView:view];
+    [self alphaButtonWithScrollView:scrollView];
     %orig;
 }
 
-- (void)scrollViewDidScroll:(UminoControlCenterBottomScrollView *)view
+- (void)scrollViewDidScroll:(UminoControlCenterBottomScrollView *)scrollView
 {
-    [self alphaButtonWithScrollView:view];
+    [self alphaButtonWithScrollView:scrollView];
     %orig;
 }
 
@@ -475,22 +475,24 @@ static void DismissControlCenter()
         AddButtons(self, YES);
     }
     if (!c) {
-        c = [CPDistributedMessagingCenter centerNamed:@"com.kindadev.ccnowplaying.center.auxo"];
+        c = [CPDistributedMessagingCenter centerNamed:CCNOWPLAYING_CENTER_NAME_AUXO_3];
         [c runServerOnCurrentThread];
     }
-    [c registerForMessageName:@"com.kindadev.ccnowplaying.info.auxo3.changed" target:self selector:@selector(handleMessageNamed:userInfo:)];
+    [c registerForMessageName:SEND_MESSAGE_NAME_AUXO_3_CHANGED target:self selector:@selector(handleMessageNamed:userInfo:)];
 }
 
 %new
 - (void)handleMessageNamed:(NSString *)name userInfo:(NSDictionary *)userInfo
 {
     if (!mc) mc = [[%c(SBMediaController) sharedInstance] init];
-    if ([name isEqualToString:@"com.kindadev.ccnowplaying.info.auxo3.changed"]) {
+    if ([name isEqualToString:SEND_MESSAGE_NAME_AUXO_3_CHANGED]) {
         if (![mc isPlaying] && isShowWhenPlaying) {
             ClearButton(self);
         } else {
             ClearButton(self);
             AddButtons(self, YES);
+            UminoControlCenterBottomScrollView *scrollView = MSHookIvar<UminoControlCenterBottomScrollView *>(self, "_scrollView");
+            [self alphaButtonWithScrollView:scrollView];
         }
     }
 }
@@ -533,8 +535,8 @@ static void DismissControlCenter()
 %hook UminoTrackInfoView
 - (id)initWithFrame:(CGRect)rect
 {
-    rect.origin.x = rect.origin.x+60.f;
-    rect.size.width = rect.size.width-60.f;
+    rect.origin.x+=60.f;
+    rect.size.width-=60.f;
     return %orig(rect);
 }
 %end
@@ -550,12 +552,9 @@ static void DismissControlCenter()
 }
 %end
 
-
-#define PREF_PATH @"/var/mobile/Library/Preferences/com.kindadev.ccnowplaying.plist"
-
 static void LoadSettings()
 {
-    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:PREF_PATH];
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:CCNOWPLAYING_PREFERENCES_PATH];
     id existLeftChoice = [dict objectForKey:@"leftChoice"];
     leftChoice = existLeftChoice ? [existLeftChoice intValue] : 1;
     id existRightChoice = [dict objectForKey:@"rightChoice"];

@@ -11,7 +11,13 @@
 // #define kCFCoreFoundationVersionNumber_iOS_8_0 1129.15
 #endif
 
-#define AUXO_3_TRACK_INFO_VIEW_HEIGHT 73.0
+#define CCNOWPLAYING_PREFERENCES_PATH    @"/var/mobile/Library/Preferences/com.kindadev.ccnowplaying.plist"
+#define CCNOWPLAYING_DISPATCH_QUEUE      @"com.kindadev.ccnowplaying.dispatch"
+#define CCNOWPLAYING_CENTER_NAME         @"com.kindadev.ccnowplaying.center"
+#define CCNOWPLAYING_CENTER_NAME_AUXO_3  @"com.kindadev.ccnowplaying.center.auxo3"
+#define SEND_MESSAGE_NAME_INFO_CHANGED   @"com.kindadev.ccnowplaying.info.changed"
+#define SEND_MESSAGE_NAME_AUXO_3_CHANGED @"com.kindadev.ccnowplaying.info.auxo3.changed"
+#define AUXO_3_TRACK_INFO_VIEW_HEIGHT    73.0
 #define IS_IOS8() (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_8_0)
 
 
