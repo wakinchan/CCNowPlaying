@@ -124,15 +124,27 @@ static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft)
     switch (rightOrLeft == 0 ? leftBtnStyle : rightBtnStyle) {
         default:
         case 0:
-            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+            if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
+                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+            } else {
+                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil selectedBGImage:nil glyphImage:img naturalHeight:0.0];
+            }
             break;
         case 1:
-            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
-            [btn setIsCircleButton:YES];
+            if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
+                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+                [btn setIsCircleButton:YES];
+            } else {
+                btn = [%c(SBUIControlCenterButton) circularButtonWithGlyphImage:img];
+            }
             break;
         case 2:
-            btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
-            [btn setIsRectButton:YES];
+            if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
+                btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
+                [btn setIsRectButton:YES];
+            } else {
+                btn = [%c(SBUIControlCenterButton) roundRectButtonWithGlyphImage:img];
+            }
             break;
     }
     return btn;
@@ -364,6 +376,9 @@ static void DismissControlCenter()
 {
     choice = tapedChoice;
     [(SBUIControlCenterButton *)sender _updateSelected:NO highlighted:NO];
+    // Device can not launch the appex from a locked state by further strengthening sandbox in iOS 8.
+    // If you attempt to launch forcibly, SpringBoard would crash.
+    // I have more of a good solution cannot think..
     if (IS_IOS8()) {
         if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
             [(SpringBoard *)UIApp requestDeviceUnlock];
