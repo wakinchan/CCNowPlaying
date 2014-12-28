@@ -39,7 +39,7 @@ static SBMediaController *mc = nil;
 static SLComposeViewController *vc = nil;
 static SBAppSwitcherController *asc = nil;
 static CPDistributedMessagingCenter *c = nil;
-static __weak SBCCMediaControlsSectionController *sc = nil;
+static SBCCMediaControlsSectionController *sc = nil;
 static int choice = 0;
 
 static NSString * GetImageName(int choice);
@@ -379,13 +379,24 @@ static void DismissControlCenter()
     // Device can not launch the appex from a locked state by further strengthening sandbox in iOS 8.
     // If you attempt to launch forcibly, SpringBoard would crash.
     // I have more of a good solution cannot think..
-    if (IS_IOS8()) {
-        if ([[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
-            [(SpringBoard *)UIApp requestDeviceUnlock];
-            return;
-        }
+    if (IS_IOS8() && [[%c(SBUserAgent) sharedUserAgent] deviceIsPasscodeLocked]) {
+        [(SpringBoard *)UIApp requestDeviceUnlock];
+        return;
     }
     ShowComposeViewController(self, self, choice);
+}
+%end
+
+%hook SBLockScreenManager
+- (BOOL)attemptUnlockWithPasscode:(id)passcode
+{
+    BOOL success = %orig;
+    if (success) {
+        if (sc) {
+            ShowComposeViewController(sc, sc, choice);
+        }
+    }
+    return success;
 }
 %end
 
@@ -427,19 +438,6 @@ static void DismissControlCenter()
 {
     %orig;
     [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
-}
-%end
-
-%hook SBLockScreenManager
-- (BOOL)attemptUnlockWithPasscode:(id)passcode
-{
-    BOOL success = %orig;
-    if (success) {
-        if (!sc) {
-            ShowComposeViewController(sc, sc, choice);
-        }
-    }
-    return success;
 }
 %end
 
