@@ -521,7 +521,9 @@ static void DismissControlCenter()
 - (void)applicationDidFinishLaunching:(id)application
 {
     %orig;
-    %init(Auxo3);
+    if (IS_IOS8()) {
+        %init(Auxo3);
+    }
 }
 %end
 
