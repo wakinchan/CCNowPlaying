@@ -7,12 +7,12 @@
 //
 
 %config(generator=MobileSubstrate);
+UIKIT_EXTERN UIApplication* UIApp;
 
 #import <Social/Social.h>
 #import <QuartzCore/QuartzCore.h>
 #import <Accounts/Accounts.h>
 #import <AppSupport/AppSupport.h>
-#import <UIKit/UIKit2.h>
 #import "substrate.h"
 #import "Headers.h"
 
@@ -262,7 +262,6 @@ static void ShowComposeViewController(id cself, id parent, int choice)
     vc.completionHandler = ^(SLComposeViewControllerResult result) {
         [parent dismissViewControllerAnimated:YES completion:nil];
         vc = nil;
-        [vc release];
         if (isAutoCloseCC) {
             DismissControlCenter();
         }
@@ -326,7 +325,6 @@ static void DismissControlCenter()
             [c sendMessageName:@"com.kindadev.ccnowplaying.info.changed" userInfo:nil];
             [c sendMessageName:@"com.kindadev.ccnowplaying.info.auxo3.changed" userInfo:nil];
         });
-        dispatch_release(subQueue);
     });
 }
 %end
@@ -397,7 +395,6 @@ static void DismissControlCenter()
     if (sc) {
         [vc dismissViewControllerAnimated:YES completion:^{
             vc = nil;
-            [vc release];
             DismissControlCenter();
         }];
     }
@@ -528,7 +525,6 @@ static void DismissControlCenter()
         if (change[@"new"] == [NSNull null]) {
             [vc dismissViewControllerAnimated:YES completion:^{
                 vc = nil;
-                [vc release];
             }];
             [asc removeObserver:self forKeyPath:@"startingDisplayLayout"];
         }
