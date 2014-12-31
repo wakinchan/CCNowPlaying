@@ -161,7 +161,7 @@ static void AddButtons(id cself, BOOL isUmino)
             leftBtn.frame = CGRectMake(OrientationIsPortrait() ? -(2.5*scale) : 17.5*scale, OrientationIsPortrait() ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
         } else {
             if (isUmino) {
-                leftBtn.frame = CGRectMake(3.0, 163.0+position, 40.0, 40.0);
+                leftBtn.frame = CGRectMake(3.0, 163.0, 40.0, 40.0);
             } else {
                 leftBtn.frame = CGRectMake(10.0, 71.0+position, 40.0, 40.0);
             }
@@ -183,7 +183,7 @@ static void AddButtons(id cself, BOOL isUmino)
             CGSize s = [[UIScreen mainScreen] applicationFrame].size;
             float w = (s.width < s.height) ? s.width : s.height;
             if (isUmino) {
-                rightBtn.frame = CGRectMake(w-40.0-3.0, 163.0+position, 40.0, 40.0);
+                rightBtn.frame = CGRectMake(w-40.0-3.0, 163.0, 40.0, 40.0);
             } else {
                 rightBtn.frame = CGRectMake(w-40.0-3.0, 71.0+position, 40.0, 40.0);
             }
@@ -461,7 +461,7 @@ static void DismissControlCenter()
 {
     for (id subview in [self subviews]) {
         if ([subview isKindOfClass:[%c(SBUIControlCenterButton) class]]) {
-            UIButton *ccb = subview;
+            UIButton *ccb = (UIButton *)subview;
             ccb.alpha = 1.0-(scrollView.contentOffset.y/AUXO_3_TRACK_INFO_VIEW_HEIGHT);
         }
     }
