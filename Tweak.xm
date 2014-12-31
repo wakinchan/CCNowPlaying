@@ -473,6 +473,8 @@ static void DismissControlCenter()
     if (!isShowWhenPlaying) {
         ClearButton(self);
         AddButtons(self, YES);
+        UminoControlCenterBottomScrollView *scrollView = MSHookIvar<UminoControlCenterBottomScrollView *>(self, "_scrollView");
+        [self alphaButtonWithScrollView:scrollView];
     }
     if (!c) {
         c = [CPDistributedMessagingCenter centerNamed:CCNOWPLAYING_CENTER_NAME_AUXO_3];
