@@ -1,7 +1,7 @@
 Package: com.kindadev.ccnowplaying
 Name: CCNowPlaying
 Depends: firmware (>= 7.0), mobilesubstrate (>= 0.9.5000), preferenceloader (>= 2.2.2)
-Version: 0.8.2
+Version: 0.8.3
 Architecture: iphoneos-arm
 Description: Post #NowPlaying from Control Center
 Maintainer: thebigboss.org <http://thebigboss.org>

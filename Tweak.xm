@@ -49,6 +49,7 @@ static NSString * GetAccountTypeIdentifier(int choice);
 static void ClearButton(UIView * view);
 static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft);
 static void AddButtons(id cself, BOOL isUmino);
+static BOOL IsReachabilityModeOnAuxo3();
 static BOOL IsPad();
 static BOOL OrientationIsPortrait();
 static MPUNowPlayingController * GetNowPlayingConteroller(id cself);
@@ -61,11 +62,11 @@ static NSString * GetImageName(int choice)
 {
     static NSString *imageName;
     switch (choice) {
-        case 1: imageName = @"ccNow-twitter"; break;
-        case 2: imageName = @"ccNow-faceBk2"; break;
-        case 3: imageName = @"ccNow-shina"; break;
-        case 4: imageName = @"ccNow-tencent"; break;
-        default: imageName = @"ccNow-onpu1"; break;
+        case 1: imageName = @"ccn-twitter"; break;
+        case 2: imageName = @"ccn-facebook"; break;
+        case 3: imageName = @"ccn-shina"; break;
+        case 4: imageName = @"ccn-tencent"; break;
+        default: imageName = @"ccn-note"; break;
     }
     return imageName;
 }
@@ -161,7 +162,7 @@ static void AddButtons(id cself, BOOL isUmino)
             leftBtn.frame = CGRectMake(OrientationIsPortrait() ? -(2.5*scale) : 17.5*scale, OrientationIsPortrait() ? 11.0*scale : 10.0*scale, 20.0*scale, 20.0*scale);
         } else {
             if (isUmino) {
-                leftBtn.frame = CGRectMake(3.0, 163.0, 40.0, 40.0);
+                leftBtn.frame = CGRectMake(3.0, IsReachabilityModeOnAuxo3() ? 163.0 : 74.0, 40.0, 40.0);
             } else {
                 leftBtn.frame = CGRectMake(10.0, 71.0+position, 40.0, 40.0);
             }
@@ -183,7 +184,7 @@ static void AddButtons(id cself, BOOL isUmino)
             CGSize s = [[UIScreen mainScreen] applicationFrame].size;
             float w = (s.width < s.height) ? s.width : s.height;
             if (isUmino) {
-                rightBtn.frame = CGRectMake(w-40.0-3.0, 163.0, 40.0, 40.0);
+                rightBtn.frame = CGRectMake(w-40.0-3.0, IsReachabilityModeOnAuxo3() ? 163.0 : 74.0, 40.0, 40.0);
             } else {
                 rightBtn.frame = CGRectMake(w-40.0-3.0, 71.0+position, 40.0, 40.0);
             }
@@ -194,6 +195,12 @@ static void AddButtons(id cself, BOOL isUmino)
             [[cself view] addSubview:rightBtn];
         }
     }
+}
+
+static BOOL IsReachabilityModeOnAuxo3()
+{
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:AUXO3_PREFERENCES_PATH];
+    return [dict objectForKey:@"ReachabilityMode"] ? [[dict objectForKey:@"ReachabilityMode"] boolValue] : YES;
 }
 
 static BOOL IsPad()
@@ -462,7 +469,8 @@ static void DismissControlCenter()
     for (id subview in [self subviews]) {
         if ([subview isKindOfClass:[%c(SBUIControlCenterButton) class]]) {
             UIButton *ccb = (UIButton *)subview;
-            ccb.alpha = 1.0-(scrollView.contentOffset.y/AUXO_3_TRACK_INFO_VIEW_HEIGHT);
+            CGFloat h = IsReachabilityModeOnAuxo3() ? AUXO_3_REACH_TRACK_INFO_VIEW_HEIGHT : AUXO_3_NON_REACH_TRACK_INFO_VIEW_HEIGHT;
+            ccb.alpha = 1.0-(scrollView.contentOffset.y/h);
         }
     }
 }
@@ -557,32 +565,18 @@ static void DismissControlCenter()
 static void LoadSettings()
 {
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:CCNOWPLAYING_PREFERENCES_PATH];
-    id existLeftChoice = [dict objectForKey:@"leftChoice"];
-    leftChoice = existLeftChoice ? [existLeftChoice intValue] : 1;
-    id existRightChoice = [dict objectForKey:@"rightChoice"];
-    rightChoice = existRightChoice ? [existRightChoice intValue] : 2;
-    id existFormat = [dict objectForKey:@"format"];
-    format = existFormat ? [existFormat copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
-    id existFormatNoArtwork = [dict objectForKey:@"formatNoArtwork"];
-    formatNoArtwork = existFormatNoArtwork ? [existFormatNoArtwork copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
-    id existArtwork = [dict objectForKey:@"isArtworkEnabled"];
-    isArtwork = existArtwork ? [existArtwork boolValue] : YES;
-    id existAutoCloseCC = [dict objectForKey:@"autoCloseCC"];
-    isAutoCloseCC = existAutoCloseCC ? [existAutoCloseCC boolValue] : YES;
-    id existPosition = [dict objectForKey:@"position"];
-    position = existPosition ? [existPosition intValue] : 0;
-    id existShowWhenPlaying = [dict objectForKey:@"showWhenPlaying"];
-    isShowWhenPlaying = existShowWhenPlaying ? [existShowWhenPlaying boolValue] : YES;
-
-    id existLeftBtnStyle = [dict objectForKey:@"leftBtnImage"];
-    leftBtnStyle = existLeftBtnStyle ? [existLeftBtnStyle intValue] : 1;
-    id existRightBtnStyle = [dict objectForKey:@"rightBtnImage"];
-    rightBtnStyle = existRightBtnStyle ? [existRightBtnStyle intValue] : 1;
-
-    id existEnableEgg = [dict objectForKey:@"enableEgg"];
-    isEnableEgg = existEnableEgg ? [existEnableEgg boolValue] : NO;
-    id existRemoveSpace = [dict objectForKey:@"removeSpace"];
-    isRemoveSpace = existRemoveSpace ? [existRemoveSpace boolValue] : NO;
+    leftChoice =         [dict objectForKey:@"leftChoice"] ? [[dict objectForKey:@"leftChoice"] intValue] : 1;
+    rightChoice =        [dict objectForKey:@"rightChoice"] ? [[dict objectForKey:@"rightChoice"] intValue] : 2;
+    format =             [dict objectForKey:@"format"] ? [[dict objectForKey:@"format"] copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
+    formatNoArtwork =    [dict objectForKey:@"formatNoArtwork"] ? [[dict objectForKey:@"formatNoArtwork"] copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
+    isArtwork =          [dict objectForKey:@"isArtworkEnabled"] ? [[dict objectForKey:@"isArtworkEnabled"] boolValue] : YES;
+    isAutoCloseCC =      [dict objectForKey:@"autoCloseCC"] ? [[dict objectForKey:@"autoCloseCC"] boolValue] : YES;
+    position =           [dict objectForKey:@"position"] ? [[dict objectForKey:@"position"] intValue] : 0;
+    isShowWhenPlaying =  [dict objectForKey:@"showWhenPlaying"] ? [[dict objectForKey:@"showWhenPlaying"] boolValue] : YES;
+    leftBtnStyle =       [dict objectForKey:@"leftBtnImage"] ? [[dict objectForKey:@"leftBtnImage"] intValue] : 1;
+    rightBtnStyle =      [dict objectForKey:@"rightBtnImage"] ? [[dict objectForKey:@"rightBtnImage"] intValue] : 1;
+    isEnableEgg =        [dict objectForKey:@"enableEgg"] ? [[dict objectForKey:@"enableEgg"] boolValue] : NO;
+    isRemoveSpace =      [dict objectForKey:@"removeSpace"] ? [[dict objectForKey:@"removeSpace"] boolValue] : NO;
 }
 
 static void PostNotification(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
