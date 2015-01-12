@@ -40,6 +40,7 @@ static SLComposeViewController *vc = nil;
 static SBAppSwitcherController *asc = nil;
 static CPDistributedMessagingCenter *c = nil;
 static SBCCMediaControlsSectionController *sc = nil;
+static UminoControlCenterBottomView *ubv = nil;
 static int choice = 0;
 
 static NSString * GetImageName(int choice);
@@ -475,9 +476,8 @@ static void DismissControlCenter()
     }
 }
 
-- (void)layoutSubviews
+- (id)initWithFrame:(CGRect)rect
 {
-    %orig;
     if (!isShowWhenPlaying) {
         ClearButton(self);
         AddButtons(self, YES);
@@ -489,6 +489,7 @@ static void DismissControlCenter()
         [c runServerOnCurrentThread];
     }
     [c registerForMessageName:SEND_MESSAGE_NAME_AUXO_3_CHANGED target:self selector:@selector(handleMessageNamed:userInfo:)];
+    return %orig;
 }
 
 %new
@@ -562,7 +563,7 @@ static void DismissControlCenter()
 }
 %end
 
-static void LoadSettings()
+static void CCNowPlayingSettingsChanged()
 {
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:CCNOWPLAYING_PREFERENCES_PATH];
     leftChoice =         [dict objectForKey:@"leftChoice"] ? [[dict objectForKey:@"leftChoice"] intValue] : 1;
@@ -579,16 +580,19 @@ static void LoadSettings()
     isRemoveSpace =      [dict objectForKey:@"removeSpace"] ? [[dict objectForKey:@"removeSpace"] boolValue] : NO;
 }
 
-static void PostNotification(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
+static void Auxo3SettingsChanged()
 {
-    LoadSettings();
+    // TODO: relayout CCNowPlaying buttons on Auxo 3..
+    // But notify does not come flying in "com.a3tweaks.auxo3.preferencesChanged".
 }
 
 %ctor
 {
     @autoreleasepool {
         %init;
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PostNotification, CFSTR("com.kindadev.ccnowplaying.settingschanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-        LoadSettings();
+        CFNotificationCenterRef darwin = CFNotificationCenterGetDarwinNotifyCenter();
+        CFNotificationCenterAddObserver(darwin, NULL, (CFNotificationCallback)CCNowPlayingSettingsChanged, CFSTR(CCNOWPLAYING_PREFERENCES_CHANGE), NULL, CFNotificationSuspensionBehaviorCoalesce);
+        CFNotificationCenterAddObserver(darwin, NULL, (CFNotificationCallback)Auxo3SettingsChanged, CFSTR(AUXO_3_PREFERENCES_CHANGE), NULL, CFNotificationSuspensionBehaviorCoalesce);
+        CCNowPlayingSettingsChanged();
     }
 }

@@ -15,13 +15,15 @@
 #define AUXO3_PREFERENCES_PATH                  @"/var/mobile/Library/Preferences/com.a3tweaks.auxo3.plist"
 #define CCNOWPLAYING_PREFERENCES_NEW            "com.kindadev.ccnowplaying"
 #define CCNOWPLAYING_PREFERENCES_CHANGE         "com.kindadev.ccnowplaying.settingschanged"
+#define AUXO_3_PREFERENCES_CHANGE               "com.a3tweaks.auxo3.preferencesChanged"
+// #define AUXO_3_PREFERENCES_CHANGE               "com.a3tweaks.auxo3.exceptionsChanged"
 #define CCNOWPLAYING_DISPATCH_QUEUE             "com.kindadev.ccnowplaying.dispatch"
 #define CCNOWPLAYING_CENTER_NAME                @"com.kindadev.ccnowplaying.center"
 #define CCNOWPLAYING_CENTER_NAME_AUXO_3         @"com.kindadev.ccnowplaying.center.auxo3"
 #define SEND_MESSAGE_NAME_INFO_CHANGED          @"com.kindadev.ccnowplaying.info.changed"
 #define SEND_MESSAGE_NAME_AUXO_3_CHANGED        @"com.kindadev.ccnowplaying.info.auxo3.changed"
-#define AUXO_3_REACH_TRACK_INFO_VIEW_HEIGHT     73.0
-#define AUXO_3_NON_REACH_TRACK_INFO_VIEW_HEIGHT 61.0
+#define AUXO_3_REACH_TRACK_INFO_VIEW_HEIGHT     73.0f
+#define AUXO_3_NON_REACH_TRACK_INFO_VIEW_HEIGHT 61.0f
 #define IS_IOS8() (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_8_0)
 
 
