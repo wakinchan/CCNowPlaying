@@ -3,7 +3,7 @@
 //  CCNowPlaying
 //
 //  Created by kinda on 01.01.2014.
-//  Copyright (c) 2014 kinda. All rights reserved.
+//  Copyright (c) 2014-2015 kinda. All rights reserved.
 //
 
 %config(generator=MobileSubstrate);
