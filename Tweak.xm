@@ -16,10 +16,10 @@ UIKIT_EXTERN UIApplication* UIApp;
 #import "substrate.h"
 #import "Headers.h"
 
-static NSString *kArtist = @"_ARTIST_";
-static NSString *kSong = @"_SONG_";
-static NSString *kAlbum = @"_ALBUM_";
-static NSString *kApplication = @"_APP_";
+static NSString * const kArtist = @"_ARTIST_";
+static NSString * const kSong = @"_SONG_";
+static NSString * const kAlbum = @"_ALBUM_";
+static NSString * const kApplication = @"_APP_";
 
 static int leftChoice;
 static int rightChoice;
