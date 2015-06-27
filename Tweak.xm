@@ -59,14 +59,27 @@ static NSDictionary * CurrentNowPlayingInfo(id cself);
 static void ShowComposeViewController(id cself, id parent, int choice);
 static void DismissControlCenter();
 
+enum {
+    ServiceTypeTwitter = 1,
+    ServiceTypeFacebook,
+    ServiceTypeShinaWeibo,
+    ServiceTypeTencentWeibo
+};
+
+enum {
+    ButtonTypeNormal = 0,
+    ButtonTypeCircle,
+    ButtonTypeRect
+};
+
 static NSString * GetImageName(int choice)
 {
     static NSString *imageName;
     switch (choice) {
-        case 1: imageName = @"ccn-twitter"; break;
-        case 2: imageName = @"ccn-facebook"; break;
-        case 3: imageName = @"ccn-shina"; break;
-        case 4: imageName = @"ccn-tencent"; break;
+        case ServiceTypeTwitter: imageName = @"ccn-twitter"; break;
+        case ServiceTypeFacebook: imageName = @"ccn-facebook"; break;
+        case ServiceTypeShinaWeibo: imageName = @"ccn-shina"; break;
+        case ServiceTypeTencentWeibo: imageName = @"ccn-tencent"; break;
         default: imageName = @"ccn-note"; break;
     }
     return imageName;
@@ -77,10 +90,10 @@ static NSString * GetServiceType(int choice)
     static NSString *serviceType;
     switch (choice) {
         default: 
-        case 1: serviceType = SLServiceTypeTwitter; break;
-        case 2: serviceType = SLServiceTypeFacebook; break;
-        case 3: serviceType = SLServiceTypeSinaWeibo; break;
-        case 4: serviceType = SLServiceTypeTencentWeibo; break;
+        case ServiceTypeTwitter: serviceType = SLServiceTypeTwitter; break;
+        case ServiceTypeFacebook: serviceType = SLServiceTypeFacebook; break;
+        case ServiceTypeShinaWeibo: serviceType = SLServiceTypeSinaWeibo; break;
+        case ServiceTypeTencentWeibo: serviceType = SLServiceTypeTencentWeibo; break;
     }
     return serviceType;
 }
@@ -90,10 +103,10 @@ static NSString * GetServiceTypeName(int choice)
     static NSString *serviceTypeName;
     switch (choice) {
         default: 
-        case 1: serviceTypeName = @"Twitter"; break;
-        case 2: serviceTypeName = @"Facebook"; break;
-        case 3: serviceTypeName = @"Sina Weibo"; break;
-        case 4: serviceTypeName = @"Tencent Weibo"; break;
+        case ServiceTypeTwitter: serviceTypeName = @"Twitter"; break;
+        case ServiceTypeFacebook: serviceTypeName = @"Facebook"; break;
+        case ServiceTypeShinaWeibo: serviceTypeName = @"Sina Weibo"; break;
+        case ServiceTypeTencentWeibo: serviceTypeName = @"Tencent Weibo"; break;
     }
     return serviceTypeName;
 }
@@ -103,10 +116,10 @@ static NSString * GetAccountTypeIdentifier(int choice)
     static NSString *accountTypeIdentifier;
     switch (choice) {
         default: 
-        case 1: accountTypeIdentifier = ACAccountTypeIdentifierTwitter; break;
-        case 2: accountTypeIdentifier = ACAccountTypeIdentifierFacebook; break;
-        case 3: accountTypeIdentifier = ACAccountTypeIdentifierSinaWeibo; break;
-        case 4: accountTypeIdentifier = ACAccountTypeIdentifierTencentWeibo; break;
+        case ServiceTypeTwitter: accountTypeIdentifier = ACAccountTypeIdentifierTwitter; break;
+        case ServiceTypeFacebook: accountTypeIdentifier = ACAccountTypeIdentifierFacebook; break;
+        case ServiceTypeShinaWeibo: accountTypeIdentifier = ACAccountTypeIdentifierSinaWeibo; break;
+        case ServiceTypeTencentWeibo: accountTypeIdentifier = ACAccountTypeIdentifierTencentWeibo; break;
     }
     return accountTypeIdentifier;
 }
@@ -126,14 +139,14 @@ static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft)
     SBUIControlCenterButton *btn = [%c(SBUIControlCenterButton) new];
     switch (rightOrLeft == 0 ? leftBtnStyle : rightBtnStyle) {
         default:
-        case 0:
+        case ButtonTypeNormal:
             if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
                 btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
             } else {
                 btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil selectedBGImage:nil glyphImage:img naturalHeight:0.0];
             }
             break;
-        case 1:
+        case ButtonTypeCircle:
             if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
                 btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
                 [btn setIsCircleButton:YES];
@@ -141,7 +154,7 @@ static SBUIControlCenterButton * MakeGlyphButton(int choice, int rightOrLeft)
                 btn = [%c(SBUIControlCenterButton) circularButtonWithGlyphImage:img];
             }
             break;
-        case 2:
+        case ButtonTypeRect:
             if ([[%c(SBUIControlCenterButton) class] respondsToSelector:@selector(_buttonWithBGImage:glyphImage:naturalHeight:)]) {
                 btn = [%c(SBUIControlCenterButton) _buttonWithBGImage:nil glyphImage:img naturalHeight:0.0];
                 [btn setIsRectButton:YES];
@@ -566,16 +579,16 @@ static void DismissControlCenter()
 static void CCNowPlayingSettingsChanged()
 {
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:CCNOWPLAYING_PREFERENCES_PATH];
-    leftChoice =         [dict objectForKey:@"leftChoice"] ? [[dict objectForKey:@"leftChoice"] intValue] : 1;
-    rightChoice =        [dict objectForKey:@"rightChoice"] ? [[dict objectForKey:@"rightChoice"] intValue] : 2;
+    leftChoice =         [dict objectForKey:@"leftChoice"] ? [[dict objectForKey:@"leftChoice"] intValue] : ServiceTypeTwitter;
+    rightChoice =        [dict objectForKey:@"rightChoice"] ? [[dict objectForKey:@"rightChoice"] intValue] : ServiceTypeFacebook;
     format =             [dict objectForKey:@"format"] ? [[dict objectForKey:@"format"] copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
     formatNoArtwork =    [dict objectForKey:@"formatNoArtwork"] ? [[dict objectForKey:@"formatNoArtwork"] copy] : @"#NowPlaying _SONG_ - _ALBUM_ by _ARTIST_ on _APP_";
     isArtwork =          [dict objectForKey:@"isArtworkEnabled"] ? [[dict objectForKey:@"isArtworkEnabled"] boolValue] : YES;
     isAutoCloseCC =      [dict objectForKey:@"autoCloseCC"] ? [[dict objectForKey:@"autoCloseCC"] boolValue] : YES;
     position =           [dict objectForKey:@"position"] ? [[dict objectForKey:@"position"] intValue] : 0;
     isShowWhenPlaying =  [dict objectForKey:@"showWhenPlaying"] ? [[dict objectForKey:@"showWhenPlaying"] boolValue] : YES;
-    leftBtnStyle =       [dict objectForKey:@"leftBtnImage"] ? [[dict objectForKey:@"leftBtnImage"] intValue] : 1;
-    rightBtnStyle =      [dict objectForKey:@"rightBtnImage"] ? [[dict objectForKey:@"rightBtnImage"] intValue] : 1;
+    leftBtnStyle =       [dict objectForKey:@"leftBtnImage"] ? [[dict objectForKey:@"leftBtnImage"] intValue] : ButtonTypeCircle;
+    rightBtnStyle =      [dict objectForKey:@"rightBtnImage"] ? [[dict objectForKey:@"rightBtnImage"] intValue] : ButtonTypeCircle;
     isEnableEgg =        [dict objectForKey:@"enableEgg"] ? [[dict objectForKey:@"enableEgg"] boolValue] : NO;
     isRemoveSpace =      [dict objectForKey:@"removeSpace"] ? [[dict objectForKey:@"removeSpace"] boolValue] : NO;
 }
