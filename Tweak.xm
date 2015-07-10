@@ -247,6 +247,13 @@ static MPUNowPlayingController * GetNowPlayingConteroller(id cself)
     return npc;
 }
 
+static void UpdateCurrentNowPlayingArtwork(id cself)
+{
+    MPUNowPlayingController *npc = GetNowPlayingConteroller(cself);
+    [npc setShouldUpdateNowPlayingArtwork: YES];
+    [npc update];
+}
+
 static UIImage * CurrentNowPlayingArtwork(id cself)
 {
     MPUNowPlayingController *npc = GetNowPlayingConteroller(cself);
@@ -354,6 +361,8 @@ static void DismissControlCenter()
 - (void)viewDidLoad
 {
     %orig;
+    UpdateCurrentNowPlayingArtwork(self);
+
     if (!isShowWhenPlaying) {
         ClearButton(self.view);
         AddButtons(self, NO);
@@ -491,6 +500,8 @@ static void DismissControlCenter()
 
 - (id)initWithFrame:(CGRect)rect
 {
+    UpdateCurrentNowPlayingArtwork(self);
+    
     if (!isShowWhenPlaying) {
         ClearButton(self);
         AddButtons(self, YES);

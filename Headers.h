@@ -62,6 +62,8 @@
 @interface MPUNowPlayingController
 @property(readonly, nonatomic) UIImage *currentNowPlayingArtwork;
 @property(readonly, nonatomic) NSDictionary *currentNowPlayingInfo;
+- (void)setShouldUpdateNowPlayingArtwork:(BOOL)enabled;
+- (void)update;
 @end
 
 @protocol MPUSystemMediaControlsDelegate <NSObject>
